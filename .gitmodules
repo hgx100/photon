@@ -1,0 +1,18 @@
+[submodule "third_party/xray-core"]
+	path = third_party/xray-core
+	url = https://github.com/XTLS/Xray-core.git
+[submodule "third_party/tgbotxx"]
+	path = third_party/tgbotxx
+	url = https://github.com/baderouaich/tgbotxx.git
+[submodule "third_party/drogon"]
+	path = third_party/drogon
+	url = https://github.com/drogonframework/drogon.git
+[submodule "third_party/nlohmann_json"]
+	path = third_party/nlohmann_json
+	url = https://github.com/nlohmann/json.git
+[submodule "third_party/jwt-cpp"]
+	path = third_party/jwt-cpp
+	url = https://github.com/Thalhammer/jwt-cpp.git
+[submodule "third_party/spdlog"]
+	path = third_party/spdlog
+	url = https://github.com/gabime/spdlog.git
