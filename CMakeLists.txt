@@ -31,10 +31,6 @@ find_package(gRPC REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(Botan REQUIRED)
 
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(pqxx REQUIRED IMPORTED_TARGET libpqxx)
-add_library(pqxx::pqxx ALIAS PkgConfig::pqxx)
-
 pkg_check_modules(CARES REQUIRED libcares)
 
 if(NOT TARGET c-ares_lib)
@@ -100,7 +96,6 @@ if(API_SRCS AND TARGET photon_protos)
 
   target_link_libraries(photon_api PRIVATE
         photon_protos
-        pqxx::pqxx
         nlohmann_json::nlohmann_json
         Threads::Threads
         drogon

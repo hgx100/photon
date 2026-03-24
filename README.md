@@ -11,7 +11,6 @@ Ensure your system has the following components installed:
 * **System Libraries**:
     * OpenSSL
     * gRPC & Protobuf (Development headers)
-    * libpqxx (PostgreSQL C++ client)
     * Botan (v3)
     * c-ares
     * libsystemd
