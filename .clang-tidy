@@ -1,7 +1,4 @@
----
-# Photon Project - Balanced Clang-Tidy Config
-# Security & Bugs = Errors (Build stops)
-# Style & Suggestions = Warnings (Build continues)
+# Photon — clang-tidy config (Security & bugs honored via WarningsAsErrors; style stays warning-level)
 
 Checks: >
   *,
@@ -27,12 +24,11 @@ Checks: >
 # ONLY stop the build for these critical categories:
 WarningsAsErrors: "bugprone-*,cert-*,clang-analyzer-*,cppcoreguidelines-no-malloc"
 
-# Only lint your source folders
-HeaderFilterRegex: '^(api/|bot/|shared/|proto/).*'
+# Project headers only (paths are often absolute in compile_commands — anchor on directory names)
+HeaderFilterRegex: '.*[/\\](api|bot|shared|proto)([/\\].*)?$'
 
 CheckOptions:
   - key:             bugprone-argument-comment.StrictMode
     value:           '1'
   - key:             performance-for-range-copy.WarnOnAllAutoCopy
     value:           '1'
----

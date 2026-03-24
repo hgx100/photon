@@ -50,7 +50,19 @@ endif()
 
 add_subdirectory(third_party/nlohmann_json SYSTEM)
 add_subdirectory(third_party/drogon SYSTEM)
+if(TARGET drogon)
+  # Drogon adds -Werror for GCC; demote to warnings so dependency updates do not break the tree.
+  target_compile_options(drogon PRIVATE $<$<CXX_COMPILER_ID:GNU>:-Wno-error>)
+endif()
+
+# cpr (inside tgbotxx) appends -Wall -Wextra -Wpedantic -Werror to CMAKE_CXX_FLAGS (global). Restore
+# after add_subdirectory so that does not stick for photon_* or later deps; cpr may still add per-target flags.
+set(_PHOTON_CXX_FLAGS_PRE_TGBOTXX "${CMAKE_CXX_FLAGS}")
 add_subdirectory(third_party/tgbotxx SYSTEM)
+set(CMAKE_CXX_FLAGS "${_PHOTON_CXX_FLAGS_PRE_TGBOTXX}"
+    CACHE STRING "Flags used by the compiler during all build types." FORCE)
+unset(_PHOTON_CXX_FLAGS_PRE_TGBOTXX)
+
 add_subdirectory(third_party/jwt-cpp SYSTEM)
 add_subdirectory(third_party/spdlog SYSTEM)
 

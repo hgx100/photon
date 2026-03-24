@@ -12,10 +12,7 @@
       "hidden": true,
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/out/build/${presetName}",
-      "installDir": "${sourceDir}/out/install/${presetName}",
-      "cacheVariables": {
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
-      }
+      "installDir": "${sourceDir}/out/install/${presetName}"
     },
     {
       "name": "conf-windows-common",
@@ -152,7 +149,6 @@
         "CMAKE_C_COMPILER": "gcc",
         "CMAKE_CXX_COMPILER": "g++",
         "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_CXX_CLANG_TIDY": "",
         "CMAKE_CXX_FLAGS_DEBUG": "-g -gsplit-dwarf"
       }
     },
@@ -180,7 +176,6 @@
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++",
         "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_CXX_CLANG_TIDY": "",
         "CMAKE_CXX_FLAGS_DEBUG": "-g -gsplit-dwarf"
       }
     },
