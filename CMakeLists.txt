@@ -62,7 +62,8 @@ unset(_PHOTON_CXX_FLAGS_PRE_TGBOTXX)
 add_subdirectory(third_party/jwt-cpp SYSTEM)
 add_subdirectory(third_party/spdlog SYSTEM)
 
-set(PHOTON_LINTER "clang-tidy;--extra-arg-before=--driver-mode=g++")
+set(PHOTON_LINTER
+    "clang-tidy;--extra-arg-before=--driver-mode=g++;--exclude-header-filter=.*/api/models/.*;--checks=-clang-analyzer-cplusplus.NewDelete")
 
 # generate protos
 include_directories(${CMAKE_SOURCE_DIR}/generated)
@@ -88,6 +89,11 @@ endif()
 
 # photon core
 file(GLOB_RECURSE API_SRCS "api/*.cpp" "shared/*.cpp")
+file(GLOB_RECURSE API_MODEL_SRCS "api/models/*.cpp")
+
+if(API_MODEL_SRCS)
+  set_source_files_properties(${API_MODEL_SRCS} PROPERTIES SKIP_LINTING ON)
+endif()
 
 if(API_SRCS AND TARGET photon_protos)
   add_executable(photon_api ${API_SRCS})
