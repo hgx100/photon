@@ -1,0 +1,77 @@
+{
+  "rdbms": "postgresql",
+  "host": "127.0.0.1",
+  "port": 5432,
+  "dbname": "photon_db",
+  "user": "postgres",
+  "password": "secure_password",
+  "schema": "public",
+  "client_encoding": "UTF-8",
+  "tables": [
+    "admins",
+    "nodes",
+    "node_inbounds",
+    "users",
+    "user_traffic_logs",
+    "transactions",
+    "user_balances"
+  ],
+  "relationships": {
+    "enabled": true,
+    "items": [
+      {
+        "type": "has many",
+        "original_table_name": "nodes",
+        "original_table_alias": "node",
+        "original_key": "id",
+        "target_table_name": "node_inbounds",
+        "target_table_alias": "inbounds",
+        "target_key": "node_id",
+        "enable_reverse": true
+      },
+      {
+        "type": "has many",
+        "original_table_name": "nodes",
+        "original_table_alias": "node",
+        "original_key": "id",
+        "target_table_name": "user_traffic_logs",
+        "target_table_alias": "traffic_logs",
+        "target_key": "node_id",
+        "enable_reverse": true
+      },
+      {
+        "type": "has many",
+        "original_table_name": "users",
+        "original_table_alias": "user",
+        "original_key": "id",
+        "target_table_name": "user_traffic_logs",
+        "target_table_alias": "traffic_logs",
+        "target_key": "user_id",
+        "enable_reverse": true
+      },
+      {
+        "type": "has many",
+        "original_table_name": "users",
+        "original_table_alias": "user",
+        "original_key": "id",
+        "target_table_name": "transactions",
+        "target_table_alias": "transactions",
+        "target_key": "user_id",
+        "enable_reverse": true
+      },
+      {
+        "type": "has one",
+        "original_table_name": "users",
+        "original_table_alias": "user",
+        "original_key": "id",
+        "target_table_name": "user_balances",
+        "target_table_alias": "balance",
+        "target_key": "user_id",
+        "enable_reverse": true
+      }
+    ]
+  },
+  "restful_api_controllers": {
+    "enabled": false
+  }
+}
