@@ -1,0 +1,18 @@
+{
+  "listeners": [{ "address": "0.0.0.0", "port": 8080, "https": false }],
+  "db_clients": [
+    {
+      "name": "PhotonServer",
+      "rdbms": "postgresql",
+      "host": "127.0.0.1",
+      "port": 5432,
+      "dbname": "photon_db",
+      "user": "postgres",
+      "password": "secure_password",
+      "connection_number": 5
+    }
+  ],
+  "custom_config": {
+    "jwt_secret": "super_secure_jwt_secret"
+  }
+}
