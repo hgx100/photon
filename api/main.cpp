@@ -3,17 +3,26 @@
 #include <drogon/drogon.h>
 #include <trantor/utils/Logger.h>
 
-#include "util/util.hpp"
+#include "config/AppConfig.hpp"
 
 int main() {
-  drogon::app().loadConfigFile("api/config/config.json");
+  try {
+    #ifdef DROGON_SPDLOG_SUPPORT
+      trantor::Logger::enableSpdLog();
+    #endif
 
-  auto jwt_secret_result = core::util::getConfigVar("jwt_secret", "PHOTON_JWT_SECRET");
-  if (!jwt_secret_result.has_value()) {
-    LOG_FATAL << jwt_secret_result.error();
+    drogon::app().loadConfigFile("api/config/config.json");
+    core::config::AppConfig::init();
+
+    LOG_INFO << "Server started";
+
+    drogon::app().run();
+
+  } catch (const std::exception& e) {
+    LOG_FATAL << "Startup failed: " << e.what();
     return 1;
   }
 
-  LOG_INFO << "Server started";
-  drogon::app().run();
+  return 0;
+
 }
