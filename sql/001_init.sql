@@ -23,6 +23,15 @@ CREATE TABLE admins (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE admin_refresh_tokens (
+    token TEXT PRIMARY KEY,
+    admin_id UUID NOT NULL REFERENCES admins(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    expires_at TIMESTAMPTZ NOT NULL
+);
+
+CREATE INDEX idx_admin_refresh_tokens_expires ON admin_refresh_tokens(expires_at);
+
 CREATE TRIGGER update_admins_modtime
     BEFORE UPDATE ON admins
     FOR EACH ROW
