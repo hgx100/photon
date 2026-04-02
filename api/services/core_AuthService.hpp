@@ -10,6 +10,7 @@
 #include <drogon/plugins/Plugin.h>
 #include <drogon/utils/coroutine.h>
 #include <expected>
+
 namespace core::services {
 
   struct LoginResult {
@@ -30,11 +31,11 @@ namespace core::services {
       /// It must be implemented by the user.
       void shutdown() override;
 
-      std::expected<LoginResult, std::string> login(const std::string& username, const std::string& password);
+      drogon::Task<std::expected<LoginResult, std::string>> login(const std::string& username, const std::string& password);
 
-      std::expected<LoginResult, std::string> refresh(const std::string& refresh_token);
+      drogon::Task<std::expected<LoginResult, std::string>> refresh(const std::string& refresh_token);
 
-      void logout(const std::string& refresh_token);
+      drogon::Task<void> logout(const std::string& refresh_token);
 
     private:
       static std::string hash_password(const std::string& password);

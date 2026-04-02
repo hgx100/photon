@@ -77,7 +77,7 @@ void AuthService::shutdown() {
   LOG_INFO << "AuthService stopped";
 }
 
-std::expected<LoginResult, std::string> AuthService::login(const std::string& username, const std::string& password){
+drogon::Task<std::expected<LoginResult, std::string>> AuthService::login(const std::string& username, const std::string& password){
   auto db = drogon::app().getDbClient("PhotonServer");
   auto adminMapper = drogon::orm::Mapper<Admins>(db);
   auto criteria = drogon::orm::Criteria(Admins::Cols::_username, drogon::orm::CompareOperator::EQ, username);
@@ -85,12 +85,12 @@ std::expected<LoginResult, std::string> AuthService::login(const std::string& us
   if (admin_list.empty()) {
     // dummy hash to avoid timing attacks
     verify_password(password, "$argon2id$v=19$m=65536,t=3,p=4$0gCDrx903KR8Fm9ZLe91dw$hks9CeG8HvWIEqdwYKj40ENfBqoPsCOoZBAFYwTSQSY");
-    return std::unexpected("Invalid credentials");
+    co_return std::unexpected("Invalid credentials");
   }
 
   auto admin = admin_list.front();
   if (!verify_password(password, admin.getValueOfPasswordHash())) {
-    return std::unexpected("Invalid credentials");
+    co_return std::unexpected("Invalid credentials");
   }
   std::string admin_id_str = admin.getValueOfId();
 
@@ -99,10 +99,10 @@ std::expected<LoginResult, std::string> AuthService::login(const std::string& us
 
   try {
     // delete expired tokens
-    db->execSqlSync("DELETE FROM admin_refresh_tokens WHERE admin_id = $1 AND expires_at < NOW()", admin_id_str);
+    co_await db->execSqlCoro("DELETE FROM admin_refresh_tokens WHERE admin_id = $1 AND expires_at < NOW()", admin_id_str);
 
     // cap the number of refresh tokens to 5
-    db->execSqlSync(R"(
+    co_await db->execSqlCoro(R"(
       DELETE FROM admin_refresh_tokens
       WHERE admin_id = $1
       AND token NOT IN (
@@ -127,7 +127,7 @@ std::expected<LoginResult, std::string> AuthService::login(const std::string& us
     tokenMapper.insert(tokenModel);
   } catch (const drogon::orm::DrogonDbException& e) {
     LOG_ERROR << "Database error inserting refresh token: " << e.base().what();
-    return std::unexpected("An internal server error occurred.");
+    co_return std::unexpected("An internal server error occurred.");
   }
 
   LoginResult result{
@@ -136,12 +136,12 @@ std::expected<LoginResult, std::string> AuthService::login(const std::string& us
     .expires_in_sec = conf.jwt_expires_in_sec
   };
 
-  return result;
+  co_return result;
 }
 
-std::expected<LoginResult, std::string> AuthService::refresh(const std::string& refresh_token) {
+drogon::Task<std::expected<LoginResult, std::string>> AuthService::refresh(const std::string& refresh_token) {
   if (refresh_token.empty()) {
-    return std::unexpected("Missing refresh token");
+    co_return std::unexpected("Missing refresh token");
   }
 
   auto db = drogon::app().getDbClient("PhotonServer");
@@ -151,7 +151,7 @@ std::expected<LoginResult, std::string> AuthService::refresh(const std::string& 
   try {
     stored = tokenMapper.findByPrimaryKey(refresh_token);
   } catch (const drogon::orm::UnexpectedRows&) {
-    return std::unexpected("Invalid refresh token");
+    co_return std::unexpected("Invalid refresh token");
   }
 
   if (stored.getValueOfExpiresAt() <= trantor::Date::now()) {
@@ -160,7 +160,7 @@ std::expected<LoginResult, std::string> AuthService::refresh(const std::string& 
     } catch (const drogon::orm::DrogonDbException& e) {
       LOG_ERROR << "Failed to delete expired refresh token: " << e.base().what();
     }
-    return std::unexpected("Refresh token expired");
+    co_return std::unexpected("Refresh token expired");
   }
 
   const std::string admin_id = stored.getValueOfAdminId();
@@ -169,7 +169,7 @@ std::expected<LoginResult, std::string> AuthService::refresh(const std::string& 
   try {
     adminMapper.findByPrimaryKey(admin_id);
   } catch (const drogon::orm::UnexpectedRows&) {
-    return std::unexpected("Invalid refresh token");
+    co_return std::unexpected("Invalid refresh token");
   }
 
   std::string access_token = generateAccessToken(admin_id);
@@ -179,12 +179,12 @@ std::expected<LoginResult, std::string> AuthService::refresh(const std::string& 
     tokenMapper.deleteByPrimaryKey(refresh_token);
   } catch (const drogon::orm::DrogonDbException& e) {
     LOG_ERROR << "Failed to revoke old refresh token: " << e.base().what();
-    return std::unexpected("Internal server error");
+    co_return std::unexpected("Internal server error");
   }
 
   try {
-    db->execSqlSync("DELETE FROM admin_refresh_tokens WHERE admin_id = $1 AND expires_at < NOW()", admin_id);
-    db->execSqlSync(R"(
+    co_await db->execSqlCoro("DELETE FROM admin_refresh_tokens WHERE admin_id = $1 AND expires_at < NOW()", admin_id);
+    co_await db->execSqlCoro(R"(
       DELETE FROM admin_refresh_tokens
       WHERE admin_id = $1
       AND token NOT IN (
@@ -209,18 +209,18 @@ std::expected<LoginResult, std::string> AuthService::refresh(const std::string& 
     tokenMapper.insert(newRow);
   } catch (const drogon::orm::DrogonDbException& e) {
     LOG_ERROR << "Database error inserting rotated refresh token: " << e.base().what();
-    return std::unexpected("An internal server error occurred.");
+    co_return std::unexpected("An internal server error occurred.");
   }
 
-  return LoginResult{
+  co_return LoginResult{
       .access_token = std::move(access_token),
       .refresh_token = std::move(new_refresh),
       .expires_in_sec = conf.jwt_expires_in_sec};
 }
 
-void AuthService::logout(const std::string& refresh_token) {
+drogon::Task<void> AuthService::logout(const std::string& refresh_token) {
   if (refresh_token.empty()) {
-    return;
+    co_return;
   }
   auto db = drogon::app().getDbClient("PhotonServer");
   drogon::orm::Mapper<AdminRefreshTokens> tokenMapper(db);

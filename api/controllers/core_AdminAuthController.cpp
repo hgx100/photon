@@ -29,7 +29,7 @@ drogon::Task<HttpResponsePtr> core::controllers::AdminAuthController::login(Http
   const std::string username = (*payload)["username"].asString();
   const std::string password = (*payload)["password"].asString();
 
-  auto login_result = authService_->login(username, password);
+  auto login_result = co_await authService_->login(username, password);
   if(!login_result.has_value()){
     nlohmann::json response;
     response["success"] = false;
@@ -49,7 +49,7 @@ drogon::Task<HttpResponsePtr> core::controllers::AdminAuthController::login(Http
   refreshCookie.setSecure(true);
   refreshCookie.setSameSite(drogon::Cookie::SameSite::kStrict);
   refreshCookie.setPath("/api/v1/auth/refresh");
-  refreshCookie.setMaxAge(conf.refresh_token_expires_in_days * 24 * 60 * 60); // 7 days
+  refreshCookie.setMaxAge(conf.refresh_token_expires_in_days * 24 * 60 * 60);
 
   res->addCookie(std::move(refreshCookie));
 
@@ -64,7 +64,7 @@ drogon::Task<HttpResponsePtr> core::controllers::AdminAuthController::refresh(Ht
         drogon::k401Unauthorized);
   }
 
-  auto refreshed = authService_->refresh(refresh_token);
+  auto refreshed = co_await authService_->refresh(refresh_token);
   if (!refreshed.has_value()) {
     co_return core::util::helpers::makeJsonResponse(
         {{"success", false}, {"message", "Unauthorized"}},
@@ -92,7 +92,7 @@ drogon::Task<HttpResponsePtr> core::controllers::AdminAuthController::refresh(Ht
 
 drogon::Task<HttpResponsePtr> core::controllers::AdminAuthController::logout(HttpRequestPtr req){
   const std::string& refresh_token = req->getCookie("refresh_token");
-  authService_->logout(refresh_token);
+  co_await authService_->logout(refresh_token);
 
   auto res = drogon::HttpResponse::newHttpResponse();
   res->setStatusCode(drogon::k200OK);
