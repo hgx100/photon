@@ -10,15 +10,18 @@ namespace core::util {
 
   [[nodiscard]] std::optional<std::string>
   validateStringField(const Json::Value& payload, std::string_view field) {
-    if (!payload.isMember(field.data(), field.data() + field.size())){
-      return std::nullopt;
-    }
+      const Json::Value* valuePtr = payload.find(field.data(), field.data() + field.size());
 
-    const std::string value = payload[std::string(field)].asString();
-    if (value.empty() || isBlank(value)){
-      return std::nullopt;
-    }
-    return value;
+      if (!valuePtr || !valuePtr->isString()) {
+          return std::nullopt;
+      }
+
+      std::string value = valuePtr->asString();
+
+      if (value.empty() || isBlank(value)) {
+          return std::nullopt;
+      }
+
+      return value;
   }
-
 } // namespace core::util
