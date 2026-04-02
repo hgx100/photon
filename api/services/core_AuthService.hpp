@@ -31,6 +31,11 @@ namespace core::services {
       void shutdown() override;
 
       std::expected<LoginResult, std::string> login(const std::string& username, const std::string& password);
+
+      std::expected<LoginResult, std::string> refresh(const std::string& refresh_token);
+
+      void logout(const std::string& refresh_token);
+
     private:
       static std::string hash_password(const std::string& password);
       static bool verify_password(const std::string& password, const std::string& hash);

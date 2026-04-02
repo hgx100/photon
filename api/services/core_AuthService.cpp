@@ -9,6 +9,7 @@
 #include <botan/system_rng.h>
 #include <botan/base64.h>
 #include <drogon/orm/Criteria.h>
+#include <drogon/orm/Exception.h>
 #include <drogon/utils/coroutine.h>
 #include <drogon/drogon.h>
 #include <algorithm>
@@ -119,8 +120,7 @@ std::expected<LoginResult, std::string> AuthService::login(const std::string& us
   tokenModel.setToken(refresh_token);
   tokenModel.setAdminId(admin_id_str);
   tokenModel.setCreatedAt(trantor::Date::now());
-  auto expires_date = trantor::Date::now().after(7 * 24 * 60 * 60); // 7 days
-  tokenModel.setExpiresAt(expires_date);
+  tokenModel.setExpiresAt(trantor::Date::now().after(7 * 24 * 60 * 60));
   try {
     drogon::orm::Mapper<AdminRefreshTokens> tokenMapper(db);
     tokenMapper.insert(tokenModel);
@@ -136,4 +136,95 @@ std::expected<LoginResult, std::string> AuthService::login(const std::string& us
   };
 
   return result;
+}
+
+std::expected<LoginResult, std::string> AuthService::refresh(const std::string& refresh_token) {
+  if (refresh_token.empty()) {
+    return std::unexpected("Missing refresh token");
+  }
+
+  auto db = drogon::app().getDbClient("PhotonServer");
+  drogon::orm::Mapper<AdminRefreshTokens> tokenMapper(db);
+
+  AdminRefreshTokens stored;
+  try {
+    stored = tokenMapper.findByPrimaryKey(refresh_token);
+  } catch (const drogon::orm::UnexpectedRows&) {
+    return std::unexpected("Invalid refresh token");
+  }
+
+  if (stored.getValueOfExpiresAt() <= trantor::Date::now()) {
+    try {
+      tokenMapper.deleteByPrimaryKey(refresh_token);
+    } catch (const drogon::orm::DrogonDbException& e) {
+      LOG_ERROR << "Failed to delete expired refresh token: " << e.base().what();
+    }
+    return std::unexpected("Refresh token expired");
+  }
+
+  const std::string admin_id = stored.getValueOfAdminId();
+
+  drogon::orm::Mapper<Admins> adminMapper(db);
+  try {
+    adminMapper.findByPrimaryKey(admin_id);
+  } catch (const drogon::orm::UnexpectedRows&) {
+    return std::unexpected("Invalid refresh token");
+  }
+
+  std::string access_token = generateAccessToken(admin_id);
+  std::string new_refresh = generateRefreshToken();
+
+  try {
+    tokenMapper.deleteByPrimaryKey(refresh_token);
+  } catch (const drogon::orm::DrogonDbException& e) {
+    LOG_ERROR << "Failed to revoke old refresh token: " << e.base().what();
+    return std::unexpected("Internal server error");
+  }
+
+  try {
+    db->execSqlSync("DELETE FROM admin_refresh_tokens WHERE admin_id = $1 AND expires_at < NOW()", admin_id);
+    db->execSqlSync(R"(
+      DELETE FROM admin_refresh_tokens
+      WHERE admin_id = $1
+      AND token NOT IN (
+        SELECT token FROM admin_refresh_tokens
+        WHERE admin_id = $1
+        ORDER BY created_at DESC
+        LIMIT 4
+      )
+    )", admin_id);
+  } catch (const std::exception& e) {
+    LOG_ERROR << "Failed to enforce session limits: " << e.what();
+  }
+
+  AdminRefreshTokens newRow;
+  newRow.setToken(new_refresh);
+  newRow.setAdminId(admin_id);
+  newRow.setCreatedAt(trantor::Date::now());
+  newRow.setExpiresAt(trantor::Date::now().after(7 * 24 * 60 * 60));
+
+  try {
+    tokenMapper.insert(newRow);
+  } catch (const drogon::orm::DrogonDbException& e) {
+    LOG_ERROR << "Database error inserting rotated refresh token: " << e.base().what();
+    return std::unexpected("An internal server error occurred.");
+  }
+
+  return LoginResult{
+      .access_token = std::move(access_token),
+      .refresh_token = std::move(new_refresh),
+      .expires_in_sec = core::config::AppConfig::get().jwt_expires_in_sec};
+}
+
+void AuthService::logout(const std::string& refresh_token) {
+  if (refresh_token.empty()) {
+    return;
+  }
+  auto db = drogon::app().getDbClient("PhotonServer");
+  drogon::orm::Mapper<AdminRefreshTokens> tokenMapper(db);
+  try {
+    tokenMapper.deleteByPrimaryKey(refresh_token);
+  } catch (const drogon::orm::DrogonDbException& e) {
+    LOG_ERROR << "Failed to delete refresh token on logout: " << e.base().what();
+  }
 }
