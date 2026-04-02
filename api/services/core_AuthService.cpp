@@ -116,11 +116,12 @@ std::expected<LoginResult, std::string> AuthService::login(const std::string& us
     LOG_ERROR << "Failed to enforce session limits: " << e.what();
   }
 
+  const auto& conf = core::config::AppConfig::get();
   AdminRefreshTokens tokenModel;
   tokenModel.setToken(refresh_token);
   tokenModel.setAdminId(admin_id_str);
   tokenModel.setCreatedAt(trantor::Date::now());
-  tokenModel.setExpiresAt(trantor::Date::now().after(7 * 24 * 60 * 60));
+  tokenModel.setExpiresAt(trantor::Date::now().after(static_cast<double>(conf.refresh_token_expires_in_days * 24 * 60 * 60)));
   try {
     drogon::orm::Mapper<AdminRefreshTokens> tokenMapper(db);
     tokenMapper.insert(tokenModel);
@@ -132,7 +133,7 @@ std::expected<LoginResult, std::string> AuthService::login(const std::string& us
   LoginResult result{
     .access_token = access_token,
     .refresh_token = refresh_token,
-    .expires_in_sec = core::config::AppConfig::get().jwt_expires_in_sec
+    .expires_in_sec = conf.jwt_expires_in_sec
   };
 
   return result;
@@ -197,11 +198,12 @@ std::expected<LoginResult, std::string> AuthService::refresh(const std::string& 
     LOG_ERROR << "Failed to enforce session limits: " << e.what();
   }
 
+  const auto& conf = core::config::AppConfig::get();
   AdminRefreshTokens newRow;
   newRow.setToken(new_refresh);
   newRow.setAdminId(admin_id);
   newRow.setCreatedAt(trantor::Date::now());
-  newRow.setExpiresAt(trantor::Date::now().after(7 * 24 * 60 * 60));
+  newRow.setExpiresAt(trantor::Date::now().after(static_cast<double>(conf.refresh_token_expires_in_days * 24 * 60 * 60)));
 
   try {
     tokenMapper.insert(newRow);
@@ -213,7 +215,7 @@ std::expected<LoginResult, std::string> AuthService::refresh(const std::string& 
   return LoginResult{
       .access_token = std::move(access_token),
       .refresh_token = std::move(new_refresh),
-      .expires_in_sec = core::config::AppConfig::get().jwt_expires_in_sec};
+      .expires_in_sec = conf.jwt_expires_in_sec};
 }
 
 void AuthService::logout(const std::string& refresh_token) {

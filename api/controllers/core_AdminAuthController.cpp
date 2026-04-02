@@ -2,6 +2,7 @@
 #include "../util/Helpers.hpp"
 #include "../util/Util.hpp"
 #include "../services/core_AuthService.hpp"
+#include "../config/AppConfig.hpp"
 
 #include <drogon/HttpTypes.h>
 #include <drogon/drogon.h>
@@ -41,13 +42,14 @@ drogon::Task<HttpResponsePtr> core::controllers::AdminAuthController::login(Http
   retJson["access_token"] = login_result->access_token;
   retJson["expires_in"] = login_result->expires_in_sec;
 
+  const auto& conf = core::config::AppConfig::get();
   auto res = drogon::HttpResponse::newHttpJsonResponse(retJson);
   drogon::Cookie refreshCookie("refresh_token", login_result->refresh_token);
   refreshCookie.setHttpOnly(true);
   refreshCookie.setSecure(true);
   refreshCookie.setSameSite(drogon::Cookie::SameSite::kStrict);
   refreshCookie.setPath("/api/v1/auth/refresh");
-  refreshCookie.setMaxAge(7 * 24 * 60 * 60); // 7 days
+  refreshCookie.setMaxAge(conf.refresh_token_expires_in_days * 24 * 60 * 60); // 7 days
 
   res->addCookie(std::move(refreshCookie));
 
@@ -76,12 +78,13 @@ drogon::Task<HttpResponsePtr> core::controllers::AdminAuthController::refresh(Ht
 
   auto res = drogon::HttpResponse::newHttpJsonResponse(retJson);
 
+  const auto& conf = core::config::AppConfig::get();
   drogon::Cookie refreshCookie("refresh_token", refreshed->refresh_token);
   refreshCookie.setHttpOnly(true);
   refreshCookie.setSecure(true);
   refreshCookie.setSameSite(drogon::Cookie::SameSite::kStrict);
   refreshCookie.setPath("/api/v1/auth/refresh");
-  refreshCookie.setMaxAge(7 * 24 * 60 * 60);
+  refreshCookie.setMaxAge(conf.refresh_token_expires_in_days * 24 * 60 * 60);
   res->addCookie(std::move(refreshCookie));
 
   co_return res;

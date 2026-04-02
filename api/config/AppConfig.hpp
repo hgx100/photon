@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdint>
 #include <string>
 
 namespace core::config {
@@ -6,6 +7,7 @@ namespace core::config {
   struct AppConfig {
       std::string jwt_secret;
       int64_t jwt_expires_in_sec;
+      int refresh_token_expires_in_days;
 
       AppConfig(const AppConfig&) = delete;
       AppConfig& operator=(const AppConfig&) = delete;
