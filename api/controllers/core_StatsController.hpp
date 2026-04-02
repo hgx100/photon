@@ -4,15 +4,14 @@
 
 using namespace drogon;
 
-namespace core
-{
-class StatsController : public drogon::HttpController<StatsController>
-{
-  public:
-    METHOD_LIST_BEGIN
-      ADD_METHOD_TO(core::StatsController::getDashboardStats, "/api/v1/dashboard/stats", Get);
-    METHOD_LIST_END
+namespace core::controllers {
+  class StatsController : public drogon::HttpController<StatsController>
+  {
+    public:
+      METHOD_LIST_BEGIN
+        ADD_METHOD_TO(core::controllers::StatsController::getDashboardStats, "/api/v1/dashboard/stats", Get);
+      METHOD_LIST_END
 
-    drogon::Task<HttpResponsePtr> getDashboardStats(HttpRequestPtr req);
-};
-}
+      drogon::Task<HttpResponsePtr> getDashboardStats(HttpRequestPtr req);
+  };
+} // namespace core::controllers

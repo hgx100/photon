@@ -2,21 +2,25 @@
 
 #include <drogon/HttpController.h>
 #include <drogon/HttpTypes.h>
+#include "../services/core_AuthService.hpp"
 
 using namespace drogon;
 
-namespace core
-{
-class AdminAuthController : public drogon::HttpController<AdminAuthController>
-{
-  public:
+namespace core::controllers {
+  class AdminAuthController : public drogon::HttpController<AdminAuthController>
+  {
+    public:
 
-    METHOD_LIST_BEGIN
-      ADD_METHOD_TO(core::AdminAuthController::login, "/api/v1/auth/login", Post);
-      ADD_METHOD_TO(core::AdminAuthController::refresh, "/api/v1/auth/refresh", Post);
-    METHOD_LIST_END
+      METHOD_LIST_BEGIN
+        ADD_METHOD_TO(core::controllers::AdminAuthController::login, "/api/v1/auth/login", Post, "core::filters::RequiresJsonBody");
+        ADD_METHOD_TO(core::controllers::AdminAuthController::refresh, "/api/v1/auth/refresh", Post);
+      METHOD_LIST_END
 
-    drogon::Task<HttpResponsePtr> login(HttpRequestPtr req);
-    drogon::Task<HttpResponsePtr> refresh(HttpRequestPtr req);
-};
-}
+      drogon::Task<HttpResponsePtr> login(HttpRequestPtr req);
+      drogon::Task<HttpResponsePtr> refresh(HttpRequestPtr req);
+    private:
+      ::core::services::AuthService *authService_ = drogon::app().getPlugin<::core::services::AuthService>();
+
+  };
+
+} // namespace core

@@ -4,9 +4,12 @@
 #include <string_view>
 #include <optional>
 #include <string>
-
+#include <drogon/HttpResponse.h>
+#include <nlohmann/json.hpp>
 
 namespace core::util::helpers {
+
+  drogon::HttpResponsePtr makeJsonResponse(const nlohmann::json& payload, drogon::HttpStatusCode status = drogon::k200OK);
 
   template<typename T>
   std::optional<T> fromEnvString(std::string_view s) {

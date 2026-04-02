@@ -14,11 +14,11 @@
 
 namespace core::util {
 
+  [[nodiscard]] bool isBlank(std::string_view sv) noexcept;
+  [[nodiscard]] std::optional<std::string> validateStringField(const Json::Value& payload, std::string_view field);
+
   template<typename T>
-  std::expected<T, std::string> getConfigVar(
-      const std::string& name,
-      const std::string& env_name = {})
-  {
+  std::expected<T, std::string> getConfigVar(const std::string& name, const std::string& env_name = {}) {
     const auto& custom_config = drogon::app().getCustomConfig();
     if (custom_config.isMember(name) && custom_config[name].is<T>()) {
       if (auto val = custom_config[name].as<T>(); helpers::isNonEmpty(val))
