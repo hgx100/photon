@@ -9,6 +9,7 @@
   "client_encoding": "UTF-8",
   "tables": [
     "admins",
+    "admin_refresh_tokens",
     "nodes",
     "node_inbounds",
     "users",
@@ -19,6 +20,16 @@
   "relationships": {
     "enabled": true,
     "items": [
+      {
+        "type": "has many",
+        "original_table_name": "admins",
+        "original_table_alias": "admin",
+        "original_key": "id",
+        "target_table_name": "admin_refresh_tokens",
+        "target_table_alias": "refresh_tokens",
+        "target_key": "admin_id",
+        "enable_reverse": true
+      },
       {
         "type": "has many",
         "original_table_name": "nodes",

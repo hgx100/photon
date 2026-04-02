@@ -38,6 +38,7 @@ namespace drogon_model
 {
 namespace photon_db
 {
+class AdminRefreshTokens;
 
 class Admins
 {
@@ -151,6 +152,10 @@ class Admins
     std::string toString() const;
     Json::Value toMasqueradedJson(const std::vector<std::string> &pMasqueradingVector) const;
     /// Relationship interfaces
+    std::vector<AdminRefreshTokens> getRefresh_tokens(const drogon::orm::DbClientPtr &clientPtr) const;
+    void getRefresh_tokens(const drogon::orm::DbClientPtr &clientPtr,
+                           const std::function<void(std::vector<AdminRefreshTokens>)> &rcb,
+                           const drogon::orm::ExceptionCallback &ecb) const;
   private:
     friend drogon::orm::Mapper<Admins>;
     friend drogon::orm::BaseBuilder<Admins, true, true>;

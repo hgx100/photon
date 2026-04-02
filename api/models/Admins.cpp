@@ -6,6 +6,7 @@
  */
 
 #include "Admins.h"
+#include "AdminRefreshTokens.h"
 #include <drogon/utils/Utilities.h>
 #include <string>
 
@@ -1182,4 +1183,40 @@ bool Admins::validJsonOfField(size_t index,
             return false;
     }
     return true;
+}
+std::vector<AdminRefreshTokens> Admins::getRefresh_tokens(const DbClientPtr &clientPtr) const {
+    static const std::string sql = "select * from admin_refresh_tokens where admin_id = $1";
+    Result r(nullptr);
+    {
+        auto binder = *clientPtr << sql;
+        binder << *id_ << Mode::Blocking >>
+            [&r](const Result &result) { r = result; };
+        binder.exec();
+    }
+    std::vector<AdminRefreshTokens> ret;
+    ret.reserve(r.size());
+    for (auto const &row : r)
+    {
+        ret.emplace_back(AdminRefreshTokens(row));
+    }
+    return ret;
+}
+
+void Admins::getRefresh_tokens(const DbClientPtr &clientPtr,
+                               const std::function<void(std::vector<AdminRefreshTokens>)> &rcb,
+                               const ExceptionCallback &ecb) const
+{
+    static const std::string sql = "select * from admin_refresh_tokens where admin_id = $1";
+    *clientPtr << sql
+               << *id_
+               >> [rcb = std::move(rcb)](const Result &r){
+                   std::vector<AdminRefreshTokens> ret;
+                   ret.reserve(r.size());
+                   for (auto const &row : r)
+                   {
+                       ret.emplace_back(AdminRefreshTokens(row));
+                   }
+                   rcb(ret);
+               }
+               >> ecb;
 }
