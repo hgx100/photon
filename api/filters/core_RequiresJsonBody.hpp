@@ -9,7 +9,6 @@
 #include <drogon/HttpFilter.h>
 using namespace drogon;
 namespace core::filters {
-
   class RequiresJsonBody : public HttpFilter<RequiresJsonBody>
   {
     public:
@@ -18,5 +17,4 @@ namespace core::filters {
                     FilterCallback &&fcb,
                     FilterChainCallback &&fccb) override;
   };
-
 } // namespace core::filters

@@ -60,15 +60,15 @@ drogon::Task<HttpResponsePtr> core::controllers::AdminAuthController::refresh(Ht
   const std::string& refresh_token = req->getCookie("refresh_token");
   if (refresh_token.empty()) {
     co_return core::util::helpers::makeJsonResponse(
-        {{"success", false}, {"message", "Unauthorized"}},
-        drogon::k401Unauthorized);
+      {{"success", false}, {"message", "Unauthorized"}},
+      drogon::k401Unauthorized);
   }
 
   auto refreshed = co_await authService_->refresh(refresh_token);
   if (!refreshed.has_value()) {
     co_return core::util::helpers::makeJsonResponse(
-        {{"success", false}, {"message", "Unauthorized"}},
-        drogon::k401Unauthorized);
+      {{"success", false}, {"message", "Unauthorized"}},
+      drogon::k401Unauthorized);
   }
 
   Json::Value retJson;

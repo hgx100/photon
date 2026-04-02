@@ -47,12 +47,12 @@ std::string AuthService::generateAccessToken(const std::string& admin_id){
   auto expires_at = now + std::chrono::seconds(conf.jwt_expires_in_sec);
 
   return jwt::create()
-      .set_type("JWS")
-      .set_issuer("PhotonServer")
-      .set_subject(admin_id)
-      .set_issued_at(now)
-      .set_expires_at(expires_at)
-      .sign(jwt::algorithm::hs256{conf.jwt_secret});
+    .set_type("JWS")
+    .set_issuer("PhotonServer")
+    .set_subject(admin_id)
+    .set_issued_at(now)
+    .set_expires_at(expires_at)
+    .sign(jwt::algorithm::hs256{conf.jwt_secret});
 }
 
 std::string AuthService::generateRefreshToken(){
@@ -213,9 +213,9 @@ drogon::Task<std::expected<LoginResult, std::string>> AuthService::refresh(const
   }
 
   co_return LoginResult{
-      .access_token = std::move(access_token),
-      .refresh_token = std::move(new_refresh),
-      .expires_in_sec = conf.jwt_expires_in_sec};
+    .access_token = std::move(access_token),
+    .refresh_token = std::move(new_refresh),
+    .expires_in_sec = conf.jwt_expires_in_sec};
 }
 
 drogon::Task<void> AuthService::logout(const std::string& refresh_token) {
