@@ -64,3 +64,23 @@ cmake --build --parallel --preset unixlike-clang-release --target photon_api
 ```
 
 The resulting binaries will be located in the build directory defined by the preset.
+
+## Runtime Configuration
+
+`photon_api` and the admin seeder look for `./config.json` by default. Use `--config /path/to/config.json` to override it.
+
+## Seed an admin
+
+Build the seeder target:
+
+```bash
+cmake --build --parallel --preset unixlike-clang-release --target photon_admin_seed
+```
+
+Then create or update an admin:
+
+```bash
+./scripts/seed_admin.sh --username admin --password 'secure_password'
+```
+
+The wrapper looks for the built binary in the common preset output directories under `out/build/` and `build/`.
