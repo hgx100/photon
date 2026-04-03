@@ -27,7 +27,13 @@ void LoginRateLimiter::doFilter(const HttpRequestPtr &req,
 {
   const auto& conf = core::config::AppConfig::get();
 
-  std::string ip = req->peerAddr().toIp();
+  std::string ip = req->getHeader("CF-Connecting-IP");
+  if (ip.empty()) {
+      ip = req->getHeader("X-Forwarded-For");
+  }
+  if (ip.empty()) {
+      ip = req->peerAddr().toIp();
+  }
 
   static drogon::CacheMap<std::string, RateLimitData> ip_attempts(
     drogon::app().getLoop()

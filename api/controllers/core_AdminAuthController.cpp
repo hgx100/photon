@@ -47,7 +47,7 @@ drogon::Task<HttpResponsePtr> core::controllers::AdminAuthController::login(Http
   refreshCookie.setHttpOnly(true);
   refreshCookie.setSecure(true);
   refreshCookie.setSameSite(drogon::Cookie::SameSite::kStrict);
-  refreshCookie.setPath("/api/v1/auth/refresh");
+  refreshCookie.setPath("/api/v1/auth");
   refreshCookie.setMaxAge(conf.refresh_token_expires_in_days * 24 * 60 * 60);
 
   res->addCookie(std::move(refreshCookie));
@@ -83,7 +83,7 @@ drogon::Task<HttpResponsePtr> core::controllers::AdminAuthController::refresh(Ht
   refreshCookie.setHttpOnly(true);
   refreshCookie.setSecure(true);
   refreshCookie.setSameSite(drogon::Cookie::SameSite::kStrict);
-  refreshCookie.setPath("/api/v1/auth/refresh");
+  refreshCookie.setPath("/api/v1/auth");
   refreshCookie.setMaxAge(conf.refresh_token_expires_in_days * 24 * 60 * 60);
   res->addCookie(std::move(refreshCookie));
 
@@ -102,7 +102,7 @@ drogon::Task<HttpResponsePtr> core::controllers::AdminAuthController::logout(Htt
   clearCookie.setHttpOnly(true);
   clearCookie.setSecure(true);
   clearCookie.setSameSite(drogon::Cookie::SameSite::kStrict);
-  clearCookie.setPath("/api/v1/auth/refresh");
+  clearCookie.setPath("/api/v1/auth");
   clearCookie.setMaxAge(0);
   res->addCookie(std::move(clearCookie));
 
