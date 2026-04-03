@@ -25,6 +25,10 @@ set(ENABLE_TESTS OFF CACHE BOOL "" FORCE) # tgbotxx
 set(JWT_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(JWT_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(JWT_EXTERNAL_NLOHMANN_JSON ON CACHE BOOL "" FORCE)
+set(CLI11_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(CLI11_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(CLI11_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+set(CLI11_INSTALL OFF CACHE BOOL "" FORCE)
 
 find_package(Threads REQUIRED)
 find_package(gRPC REQUIRED)
@@ -45,6 +49,7 @@ if(NOT TARGET c-ares_lib)
 endif()
 
 add_subdirectory(third_party/nlohmann_json SYSTEM)
+add_subdirectory(third_party/cli11 SYSTEM)
 add_subdirectory(third_party/drogon SYSTEM)
 if(TARGET drogon)
   # Drogon adds -Werror for GCC; demote to warnings so dependency updates do not break the tree.
@@ -102,6 +107,7 @@ if(API_SRCS AND TARGET photon_protos)
 
   target_link_libraries(photon_api PRIVATE
         photon_protos
+        CLI11::CLI11
         nlohmann_json::nlohmann_json
         Threads::Threads
         drogon
