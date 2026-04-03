@@ -12,7 +12,7 @@ namespace core::filters {
   class RequiresJsonBody : public HttpFilter<RequiresJsonBody>
   {
     public:
-      RequiresJsonBody() {}
+      RequiresJsonBody() = default;
       void doFilter(const HttpRequestPtr &req,
                     FilterCallback &&fcb,
                     FilterChainCallback &&fccb) override;

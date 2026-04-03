@@ -1,7 +1,5 @@
 #pragma once
 
-#include <charconv>
-#include <cstdint>
 #include <cstdlib>
 #include <expected>
 #include <format>
@@ -21,14 +19,16 @@ namespace core::util {
   std::expected<T, std::string> getConfigVar(const std::string& name, const std::string& env_name = {}) {
     const auto& custom_config = drogon::app().getCustomConfig();
     if (custom_config.isMember(name) && custom_config[name].is<T>()) {
-      if (auto val = custom_config[name].as<T>(); helpers::isNonEmpty(val))
+      if (auto val = custom_config[name].as<T>(); helpers::isNonEmpty(val)) {
         return val;
+      }
     }
 
     if (!env_name.empty()) {
       if (const char* raw = std::getenv(env_name.c_str()); raw && *raw != '\0') {
-        if (auto val = helpers::fromEnvString<T>(raw))
+        if (auto val = helpers::fromEnvString<T>(raw)) {
           return *val;
+        }
         return std::unexpected(std::format(
           "Config variable '{}': env var {} could not be parsed as {}.",
           name, env_name, helpers::typeName<T>()));

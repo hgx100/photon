@@ -12,7 +12,7 @@ namespace core::util {
   validateStringField(const Json::Value& payload, std::string_view field) {
       const Json::Value* valuePtr = payload.find(field.data(), field.data() + field.size());
 
-      if (!valuePtr || !valuePtr->isString()) {
+      if ((valuePtr == nullptr) || !valuePtr->isString()) {
           return std::nullopt;
       }
 

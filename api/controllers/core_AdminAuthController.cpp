@@ -7,8 +7,6 @@
 #include <drogon/HttpTypes.h>
 #include <drogon/drogon.h>
 #include <nlohmann/json.hpp>
-#include <cctype>
-#include <ranges>
 #include <string_view>
 
 using namespace core;
@@ -17,7 +15,7 @@ drogon::Task<HttpResponsePtr> core::controllers::AdminAuthController::login(Http
   const auto payload = req->getJsonObject();
   static constexpr std::array requiredFields{"username", "password"};
 
-  for (const auto field : requiredFields) {
+  for (const auto *const field : requiredFields) {
     if (!util::validateStringField(*payload, field)) {
       co_return core::helpers::makeJsonResponse(
         {{"success", false},
@@ -29,7 +27,8 @@ drogon::Task<HttpResponsePtr> core::controllers::AdminAuthController::login(Http
   const std::string username = (*payload)["username"].asString();
   const std::string password = (*payload)["password"].asString();
 
-  auto login_result = co_await authService_->login(username, password);
+  auto *authService = drogon::app().getPlugin<core::services::AuthService>();
+  auto login_result = co_await authService->login(username, password);
   if(!login_result.has_value()){
     nlohmann::json response;
     response["success"] = false;
@@ -64,7 +63,8 @@ drogon::Task<HttpResponsePtr> core::controllers::AdminAuthController::refresh(Ht
       drogon::k401Unauthorized);
   }
 
-  auto refreshed = co_await authService_->refresh(refresh_token);
+  auto *authService = drogon::app().getPlugin<core::services::AuthService>();
+  auto refreshed = co_await authService->refresh(refresh_token);
   if (!refreshed.has_value()) {
     co_return core::helpers::makeJsonResponse(
       {{"success", false}, {"message", "Unauthorized"}},
@@ -92,7 +92,8 @@ drogon::Task<HttpResponsePtr> core::controllers::AdminAuthController::refresh(Ht
 
 drogon::Task<HttpResponsePtr> core::controllers::AdminAuthController::logout(HttpRequestPtr req){
   const std::string& refresh_token = req->getCookie("refresh_token");
-  co_await authService_->logout(refresh_token);
+  auto *authService = drogon::app().getPlugin<core::services::AuthService>();
+  co_await authService->logout(refresh_token);
 
   auto res = drogon::HttpResponse::newHttpResponse();
   res->setStatusCode(drogon::k200OK);

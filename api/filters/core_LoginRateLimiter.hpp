@@ -12,7 +12,7 @@ namespace core::filters {
   class LoginRateLimiter : public HttpFilter<LoginRateLimiter>
   {
     public:
-      LoginRateLimiter() {}
+      LoginRateLimiter() = default;
       void doFilter(const HttpRequestPtr &req,
                     FilterCallback &&fcb,
                     FilterChainCallback &&fccb) override;
