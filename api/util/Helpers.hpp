@@ -7,7 +7,7 @@
 #include <drogon/HttpResponse.h>
 #include <nlohmann/json.hpp>
 
-namespace core::util::helpers {
+namespace core::helpers {
 
   drogon::HttpResponsePtr makeJsonResponse(const nlohmann::json& payload, drogon::HttpStatusCode status = drogon::k200OK);
 
@@ -57,4 +57,4 @@ namespace core::util::helpers {
     }
   }
 
-} // namespace core::util::helpers
+} // namespace core::helpers

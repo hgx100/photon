@@ -54,7 +54,7 @@ void LoginRateLimiter::doFilter(const HttpRequestPtr &req,
         nlohmann::json response;
         response["success"] = false;
         response["message"] = "Too many login attempts. Please try again later.";
-        fcb(core::util::helpers::makeJsonResponse(response));
+        fcb(core::helpers::makeJsonResponse(response));
         return;
       }
       data.count++;

@@ -19,7 +19,7 @@ drogon::Task<HttpResponsePtr> core::controllers::AdminAuthController::login(Http
 
   for (const auto field : requiredFields) {
     if (!util::validateStringField(*payload, field)) {
-      co_return core::util::helpers::makeJsonResponse(
+      co_return core::helpers::makeJsonResponse(
         {{"success", false},
         {"message", std::format("'{}' is required and must not be blank", field)}},
         drogon::k400BadRequest);
@@ -34,7 +34,7 @@ drogon::Task<HttpResponsePtr> core::controllers::AdminAuthController::login(Http
     nlohmann::json response;
     response["success"] = false;
     response["message"] = "Invalid credentials";
-    co_return core::util::helpers::makeJsonResponse(response, drogon::k401Unauthorized);
+    co_return core::helpers::makeJsonResponse(response, drogon::k401Unauthorized);
   }
 
   Json::Value retJson;
@@ -59,14 +59,14 @@ drogon::Task<HttpResponsePtr> core::controllers::AdminAuthController::login(Http
 drogon::Task<HttpResponsePtr> core::controllers::AdminAuthController::refresh(HttpRequestPtr req){
   const std::string& refresh_token = req->getCookie("refresh_token");
   if (refresh_token.empty()) {
-    co_return core::util::helpers::makeJsonResponse(
+    co_return core::helpers::makeJsonResponse(
       {{"success", false}, {"message", "Unauthorized"}},
       drogon::k401Unauthorized);
   }
 
   auto refreshed = co_await authService_->refresh(refresh_token);
   if (!refreshed.has_value()) {
-    co_return core::util::helpers::makeJsonResponse(
+    co_return core::helpers::makeJsonResponse(
       {{"success", false}, {"message", "Unauthorized"}},
       drogon::k401Unauthorized);
   }

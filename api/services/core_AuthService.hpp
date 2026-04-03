@@ -38,8 +38,6 @@ namespace core::services {
       drogon::Task<void> logout(const std::string& refresh_token);
 
     private:
-      static std::string hash_password(const std::string& password);
-      static bool verify_password(const std::string& password, const std::string& hash);
       static std::string generateAccessToken(const std::string& admin_id);
       static std::string generateRefreshToken();
 

@@ -6,6 +6,7 @@
 
 #include "core_AuthService.hpp"
 #include "../config/AppConfig.hpp"
+#include "../util/Crypto.hpp"
 #include <botan/system_rng.h>
 #include <botan/base64.h>
 #include <drogon/orm/Criteria.h>
@@ -17,28 +18,12 @@
 #include <expected>
 #include "../models/AdminRefreshTokens.h"
 #include "../models/Admins.h"
-#include <botan-3/botan/argon2.h>
 #include <jwt-cpp/jwt.h>
 
 
 using namespace drogon;
 using namespace core::services;
 using namespace drogon_model::photon_db;
-
-std::string AuthService::hash_password(const std::string& password) {
-  auto& rng = Botan::system_rng();
-
-    // Argon2id parameters
-    size_t p = 4;      // Parallelism (threads)
-    size_t M = 65536;  // Memory cost in KB (64 MB)
-    size_t t = 3;      // Time cost (iterations)
-
-    return Botan::argon2_generate_pwhash(password.c_str(), password.size(), rng, p, M, t, 2);
-}
-
-bool AuthService::verify_password(const std::string& password, const std::string& hash) {
-  return Botan::argon2_check_pwhash(password.c_str(), password.size(), hash);
-}
 
 std::string AuthService::generateAccessToken(const std::string& admin_id){
   const auto& conf = config::AppConfig::get();
@@ -84,12 +69,12 @@ drogon::Task<std::expected<LoginResult, std::string>> AuthService::login(const s
   auto admin_list = adminMapper.findBy(criteria);
   if (admin_list.empty()) {
     // dummy hash to avoid timing attacks
-    verify_password(password, "$argon2id$v=19$m=65536,t=3,p=4$0gCDrx903KR8Fm9ZLe91dw$hks9CeG8HvWIEqdwYKj40ENfBqoPsCOoZBAFYwTSQSY");
+    core::crypto::verifyPassword(password, "$argon2id$v=19$m=65536,t=3,p=4$0gCDrx903KR8Fm9ZLe91dw$hks9CeG8HvWIEqdwYKj40ENfBqoPsCOoZBAFYwTSQSY");
     co_return std::unexpected("Invalid credentials");
   }
 
   auto admin = admin_list.front();
-  if (!verify_password(password, admin.getValueOfPasswordHash())) {
+  if (!core::crypto::verifyPassword(password, admin.getValueOfPasswordHash())) {
     co_return std::unexpected("Invalid credentials");
   }
   std::string admin_id_str = admin.getValueOfId();
