@@ -122,6 +122,22 @@ if(API_SRCS AND TARGET photon_protos)
     )
 endif()
 
+# photon admin seeder
+if(TARGET photon_protos)
+  add_executable(photon_admin_seed tools/seed_admin.cpp api/util/Crypto.cpp)
+
+  if(PHOTON_ENABLE_CLANG_TIDY)
+    set_target_properties(photon_admin_seed PROPERTIES CXX_CLANG_TIDY "${PHOTON_LINTER}")
+  endif()
+
+  target_link_libraries(photon_admin_seed PRIVATE
+        CLI11::CLI11
+        Threads::Threads
+        drogon
+        Botan::Botan
+    )
+endif()
+
 # photon bot
 file(GLOB_RECURSE BOT_SRCS "bot/*.cpp" "shared/*.cpp")
 
