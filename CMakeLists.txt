@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+option(PHOTON_ENABLE_CLANG_TIDY "Enable clang-tidy on photon targets" ON)
 
 # add compile_commands.json symlink for clangd
 if(NOT CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR)
@@ -67,8 +68,10 @@ unset(_PHOTON_CXX_FLAGS_PRE_TGBOTXX)
 add_subdirectory(third_party/jwt-cpp SYSTEM)
 add_subdirectory(third_party/spdlog SYSTEM)
 
-set(PHOTON_LINTER
-    "clang-tidy;--extra-arg-before=--driver-mode=g++;--exclude-header-filter=.*/api/models/.*;--checks=-clang-analyzer-cplusplus.NewDelete")
+if(PHOTON_ENABLE_CLANG_TIDY)
+  set(PHOTON_LINTER
+      "clang-tidy;--quiet;--extra-arg-before=--driver-mode=g++;--exclude-header-filter=.*/api/models/.*;--checks=-*,bugprone-*,cert-*,clang-analyzer-*,cppcoreguidelines-no-malloc;--warnings-as-errors=*")
+endif()
 
 # generate protos
 include_directories(${CMAKE_SOURCE_DIR}/generated)
@@ -103,7 +106,9 @@ endif()
 if(API_SRCS AND TARGET photon_protos)
   add_executable(photon_api ${API_SRCS})
 
-  set_target_properties(photon_api PROPERTIES CXX_CLANG_TIDY "${PHOTON_LINTER}")
+  if(PHOTON_ENABLE_CLANG_TIDY)
+    set_target_properties(photon_api PROPERTIES CXX_CLANG_TIDY "${PHOTON_LINTER}")
+  endif()
 
   target_link_libraries(photon_api PRIVATE
         photon_protos
@@ -123,7 +128,9 @@ file(GLOB_RECURSE BOT_SRCS "bot/*.cpp" "shared/*.cpp")
 if(BOT_SRCS AND TARGET photon_protos)
   add_executable(photon_bot ${BOT_SRCS})
 
-  set_target_properties(photon_bot PROPERTIES CXX_CLANG_TIDY "${PHOTON_LINTER}")
+  if(PHOTON_ENABLE_CLANG_TIDY)
+    set_target_properties(photon_bot PROPERTIES CXX_CLANG_TIDY "${PHOTON_LINTER}")
+  endif()
 
   target_link_libraries(photon_bot PRIVATE
         photon_protos
