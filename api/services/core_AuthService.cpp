@@ -9,6 +9,7 @@
 #include "../util/Crypto.hpp"
 #include <botan/system_rng.h>
 #include <botan/base64.h>
+#include <drogon/orm/CoroMapper.h>
 #include <drogon/orm/Criteria.h>
 #include <drogon/orm/Exception.h>
 #include <drogon/utils/coroutine.h>
@@ -64,9 +65,9 @@ void AuthService::shutdown() {
 
 drogon::Task<std::expected<LoginResult, std::string>> AuthService::login(const std::string& username, const std::string& password){
   auto db = drogon::app().getDbClient("PhotonServer");
-  auto adminMapper = drogon::orm::Mapper<Admins>(db);
+  auto adminMapper = drogon::orm::CoroMapper<Admins>(db);
   auto criteria = drogon::orm::Criteria(Admins::Cols::_username, drogon::orm::CompareOperator::EQ, username);
-  auto admin_list = adminMapper.findBy(criteria);
+  auto admin_list = co_await adminMapper.findBy(criteria);
   if (admin_list.empty()) {
     // dummy hash to avoid timing attacks
     core::crypto::verifyPassword(password, "$argon2id$v=19$m=65536,t=3,p=4$0gCDrx903KR8Fm9ZLe91dw$hks9CeG8HvWIEqdwYKj40ENfBqoPsCOoZBAFYwTSQSY");
@@ -108,7 +109,7 @@ drogon::Task<std::expected<LoginResult, std::string>> AuthService::login(const s
   tokenModel.setCreatedAt(trantor::Date::now());
   tokenModel.setExpiresAt(trantor::Date::now().after(static_cast<double>(conf.refresh_token_expires_in_days * 24 * 60 * 60)));
   try {
-    drogon::orm::Mapper<AdminRefreshTokens> tokenMapper(db);
+    drogon::orm::CoroMapper<AdminRefreshTokens> tokenMapper(db);
     tokenMapper.insert(tokenModel);
   } catch (const drogon::orm::DrogonDbException& e) {
     LOG_ERROR << "Database error inserting refresh token: " << e.base().what();
@@ -130,11 +131,11 @@ drogon::Task<std::expected<LoginResult, std::string>> AuthService::refresh(const
   }
 
   auto db = drogon::app().getDbClient("PhotonServer");
-  drogon::orm::Mapper<AdminRefreshTokens> tokenMapper(db);
+  drogon::orm::CoroMapper<AdminRefreshTokens> tokenMapper(db);
 
   AdminRefreshTokens stored;
   try {
-    stored = tokenMapper.findByPrimaryKey(refresh_token);
+    stored = co_await tokenMapper.findByPrimaryKey(refresh_token);
   } catch (const drogon::orm::UnexpectedRows&) {
     co_return std::unexpected("Invalid refresh token");
   }
@@ -150,7 +151,7 @@ drogon::Task<std::expected<LoginResult, std::string>> AuthService::refresh(const
 
   const std::string admin_id = stored.getValueOfAdminId();
 
-  drogon::orm::Mapper<Admins> adminMapper(db);
+  drogon::orm::CoroMapper<Admins> adminMapper(db);
   try {
     adminMapper.findByPrimaryKey(admin_id);
   } catch (const drogon::orm::UnexpectedRows&) {
@@ -208,7 +209,7 @@ drogon::Task<void> AuthService::logout(const std::string& refresh_token) {
     co_return;
   }
   auto db = drogon::app().getDbClient("PhotonServer");
-  drogon::orm::Mapper<AdminRefreshTokens> tokenMapper(db);
+  drogon::orm::CoroMapper<AdminRefreshTokens> tokenMapper(db);
   try {
     tokenMapper.deleteByPrimaryKey(refresh_token);
   } catch (const drogon::orm::DrogonDbException& e) {
