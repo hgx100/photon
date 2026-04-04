@@ -10,13 +10,13 @@ namespace core::controllers {
   {
     public:
       METHOD_LIST_BEGIN
-        ADD_METHOD_TO(core::controllers::NodeController::listNodes, "/api/v1/nodes", Get);
-        ADD_METHOD_TO(core::controllers::NodeController::getNode, "/api/v1/nodes/{1}", Get);
-        ADD_METHOD_TO(core::controllers::NodeController::createNode, "/api/v1/nodes", Post);
-        ADD_METHOD_TO(core::controllers::NodeController::updateNode, "/api/v1/nodes/{1}", Put);
-        ADD_METHOD_TO(core::controllers::NodeController::deleteNode, "/api/v1/nodes/{1}", Delete);
-        ADD_METHOD_TO(core::controllers::NodeController::addInbound, "/api/v1/nodes/{1}/inbounds", Post);
-        ADD_METHOD_TO(core::controllers::NodeController::deleteInbound, "/api/v1/nodes/{1}/inbounds/{2}", Delete);
+        ADD_METHOD_TO(core::controllers::NodeController::listNodes, "/api/v1/nodes", Get, "core::filters::JwtAuth");
+        ADD_METHOD_TO(core::controllers::NodeController::getNode, "/api/v1/nodes/{1}", Get, "core::filters::JwtAuth");
+        ADD_METHOD_TO(core::controllers::NodeController::createNode, "/api/v1/nodes", Post, "core::filters::JwtAuth");
+        ADD_METHOD_TO(core::controllers::NodeController::updateNode, "/api/v1/nodes/{1}", Put, "core::filters::JwtAuth");
+        ADD_METHOD_TO(core::controllers::NodeController::deleteNode, "/api/v1/nodes/{1}", Delete, "core::filters::JwtAuth");
+        ADD_METHOD_TO(core::controllers::NodeController::addInbound, "/api/v1/nodes/{1}/inbounds", Post, "core::filters::JwtAuth");
+        ADD_METHOD_TO(core::controllers::NodeController::deleteInbound, "/api/v1/nodes/{1}/inbounds/{2}", Delete, "core::filters::JwtAuth");
       METHOD_LIST_END
 
       drogon::Task<HttpResponsePtr> listNodes(HttpRequestPtr req);
