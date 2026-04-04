@@ -106,7 +106,7 @@ drogon::Task<std::expected<LoginResult, std::string>> AuthService::login(const s
   tokenModel.setExpiresAt(trantor::Date::now().after(static_cast<double>(conf.refresh_token_expires_in_days * 24 * 60 * 60)));
   try {
     drogon::orm::CoroMapper<AdminRefreshTokens> tokenMapper(db);
-    tokenMapper.insert(tokenModel);
+    co_await tokenMapper.insert(tokenModel);
   } catch (const drogon::orm::DrogonDbException& e) {
     LOG_ERROR << "Database error inserting refresh token: " << e.base().what();
     co_return std::unexpected("An internal server error occurred.");
@@ -206,7 +206,7 @@ drogon::Task<void> AuthService::logout(const std::string& refresh_token) {
   auto db = drogon::app().getDbClient("PhotonServer");
   drogon::orm::CoroMapper<AdminRefreshTokens> tokenMapper(db);
   try {
-    tokenMapper.deleteByPrimaryKey(refresh_token);
+    co_await tokenMapper.deleteByPrimaryKey(refresh_token);
   } catch (const drogon::orm::DrogonDbException& e) {
     LOG_ERROR << "Failed to delete refresh token on logout: " << e.base().what();
   }
