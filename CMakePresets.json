@@ -11,13 +11,6 @@
       "description": "General settings that apply to all configurations",
       "hidden": true,
       "generator": "Ninja",
-      "warnings": {
-        "dev": false,
-        "deprecated": false
-      },
-      "cacheVariables": {
-        "CMAKE_MESSAGE_LOG_LEVEL": "ERROR"
-      },
       "binaryDir": "${sourceDir}/out/build/${presetName}",
       "installDir": "${sourceDir}/out/install/${presetName}"
     },
@@ -55,9 +48,7 @@
         "list": ["Linux", "Darwin"]
       },
       "cacheVariables": {
-        "CMAKE_C_FLAGS": "-w",
         "CMAKE_C_COMPILER_LAUNCHER": "ccache",
-        "CMAKE_CXX_FLAGS": "-w",
         "CMAKE_CXX_COMPILER_LAUNCHER": "ccache",
         "CMAKE_LINKER_TYPE": "MOLD",
         "CMAKE_CXX_CLANG_TIDY": "",
