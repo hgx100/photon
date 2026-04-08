@@ -48,7 +48,10 @@
         "list": ["Linux", "Darwin"]
       },
       "cacheVariables": {
+        "CMAKE_C_FLAGS": "",
+        "CMAKE_COLOR_DIAGNOSTICS": "ON",
         "CMAKE_C_COMPILER_LAUNCHER": "ccache",
+        "CMAKE_CXX_FLAGS": "",
         "CMAKE_CXX_COMPILER_LAUNCHER": "ccache",
         "CMAKE_LINKER_TYPE": "MOLD",
         "CMAKE_CXX_CLANG_TIDY": "",
