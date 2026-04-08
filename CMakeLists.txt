@@ -77,7 +77,7 @@ add_subdirectory(third_party/spdlog SYSTEM)
 
 if(PHOTON_ENABLE_CLANG_TIDY)
   set(PHOTON_LINTER
-      "clang-tidy;--extra-arg-before=--driver-mode=g++;--exclude-header-filter=.*/api/models/.*")
+      "clang-tidy;--use-color;--extra-arg-before=--driver-mode=g++;--exclude-header-filter=.*/api/models/.*")
 endif()
 
 # generate protos

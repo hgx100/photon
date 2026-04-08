@@ -59,6 +59,7 @@ Checks: >
 
 WarningsAsErrors: ''
 HeaderFilterRegex: '.*[/\\](api|bot|shared|tools)([/\\].*)?$'
+UseColor: true
 
 CheckOptions:
   - key: performance-for-range-copy.WarnOnAllAutoCopy
