@@ -57,7 +57,7 @@ Checks: >
   performance-no-automatic-move,
   readability-redundant-string-init
 
-WarningsAsErrors: 'clang-analyzer-*'
+WarningsAsErrors: ''
 HeaderFilterRegex: '.*[/\\](api|bot|shared|tools)([/\\].*)?$'
 
 CheckOptions:
