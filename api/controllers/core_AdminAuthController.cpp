@@ -17,10 +17,9 @@ drogon::Task<HttpResponsePtr> core::controllers::AdminAuthController::login(Http
 
   for (const auto *const field : requiredFields) {
     if (!util::validateStringField(*payload, field)) {
-      co_return core::helpers::makeJsonResponse(
-        {{"success", false},
-        {"message", std::format("'{}' is required and must not be blank", field)}},
-        drogon::k400BadRequest);
+      co_return core::helpers::makeErrorResponse(
+        drogon::k400BadRequest,
+        std::format("'{}' is required and must not be blank", field));
     }
   }
 
@@ -30,10 +29,9 @@ drogon::Task<HttpResponsePtr> core::controllers::AdminAuthController::login(Http
   auto *authService = drogon::app().getPlugin<core::services::AuthService>();
   auto login_result = co_await authService->login(username, password);
   if(!login_result.has_value()){
-    nlohmann::json response;
-    response["success"] = false;
-    response["message"] = "Invalid credentials";
-    co_return core::helpers::makeJsonResponse(response, drogon::k401Unauthorized);
+    co_return core::helpers::makeErrorResponse(
+      login_result.error().status,
+      login_result.error().message);
   }
 
   Json::Value retJson;
@@ -58,17 +56,15 @@ drogon::Task<HttpResponsePtr> core::controllers::AdminAuthController::login(Http
 drogon::Task<HttpResponsePtr> core::controllers::AdminAuthController::refresh(HttpRequestPtr req){
   const std::string& refresh_token = req->getCookie("refresh_token");
   if (refresh_token.empty()) {
-    co_return core::helpers::makeJsonResponse(
-      {{"success", false}, {"message", "Unauthorized"}},
-      drogon::k401Unauthorized);
+    co_return core::helpers::makeErrorResponse(drogon::k401Unauthorized);
   }
 
   auto *authService = drogon::app().getPlugin<core::services::AuthService>();
   auto refreshed = co_await authService->refresh(refresh_token);
   if (!refreshed.has_value()) {
-    co_return core::helpers::makeJsonResponse(
-      {{"success", false}, {"message", "Unauthorized"}},
-      drogon::k401Unauthorized);
+    co_return core::helpers::makeErrorResponse(
+      refreshed.error().status,
+      refreshed.error().message);
   }
 
   Json::Value retJson;

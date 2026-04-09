@@ -15,17 +15,17 @@ void RequiresJsonBody::doFilter(const HttpRequestPtr &req,
                          FilterChainCallback &&fccb)
 {
   if (req->bodyLength() == 0) {
-    fcb(core::helpers::makeJsonResponse(
-      {{"success", false}, {"message", "Request body is missing"}},
-      drogon::k400BadRequest));
+    fcb(core::helpers::makeErrorResponse(
+      drogon::k400BadRequest,
+      "Request body is missing"));
     return;
   }
 
   const auto payload = req->getJsonObject();
   if (!payload || payload->isNull() || !payload->isObject()) {
-    fcb(core::helpers::makeJsonResponse(
-      {{"success", false}, {"message", "Malformed JSON payload"}},
-      drogon::k400BadRequest));
+    fcb(core::helpers::makeErrorResponse(
+      drogon::k400BadRequest,
+      "Malformed JSON payload"));
     return;
   }
 

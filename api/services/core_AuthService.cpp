@@ -7,6 +7,7 @@
 #include "core_AuthService.hpp"
 #include "../config/AppConfig.hpp"
 #include "../util/Crypto.hpp"
+#include "../util/Helpers.hpp"
 #include <botan/system_rng.h>
 #include <botan/base64.h>
 #include <drogon/orm/CoroMapper.h>
@@ -59,7 +60,7 @@ void AuthService::shutdown() {
   LOG_INFO << "AuthService stopped";
 }
 
-drogon::Task<std::expected<LoginResult, std::string>> AuthService::login(const std::string& username, const std::string& password){
+drogon::Task<std::expected<LoginResult, ServiceError>> AuthService::login(const std::string& username, const std::string& password){
   auto db = drogon::app().getDbClient("PhotonServer");
   auto adminMapper = drogon::orm::CoroMapper<Admins>(db);
   auto criteria = drogon::orm::Criteria(Admins::Cols::_username, drogon::orm::CompareOperator::EQ, username);
@@ -67,12 +68,16 @@ drogon::Task<std::expected<LoginResult, std::string>> AuthService::login(const s
   if (admin_list.empty()) {
     // dummy hash to avoid timing attacks
     core::crypto::verifyPassword(password, "$argon2id$v=19$m=65536,t=3,p=4$0gCDrx903KR8Fm9ZLe91dw$hks9CeG8HvWIEqdwYKj40ENfBqoPsCOoZBAFYwTSQSY");
-    co_return std::unexpected("Invalid credentials");
+    co_return std::unexpected(ServiceError{
+      .status = drogon::k401Unauthorized,
+      .message = "Invalid credentials"});
   }
 
   auto admin = admin_list.front();
   if (!core::crypto::verifyPassword(password, admin.getValueOfPasswordHash())) {
-    co_return std::unexpected("Invalid credentials");
+    co_return std::unexpected(ServiceError{
+      .status = drogon::k401Unauthorized,
+      .message = "Invalid credentials"});
   }
   std::string admin_id_str = admin.getValueOfId();
 
@@ -109,7 +114,9 @@ drogon::Task<std::expected<LoginResult, std::string>> AuthService::login(const s
     co_await tokenMapper.insert(tokenModel);
   } catch (const drogon::orm::DrogonDbException& e) {
     LOG_ERROR << "Database error inserting refresh token: " << e.base().what();
-    co_return std::unexpected("An internal server error occurred.");
+    co_return std::unexpected(ServiceError{
+      .status = drogon::k500InternalServerError,
+      .message = std::string(core::helpers::defaultErrorMessage(drogon::k500InternalServerError))});
   }
 
   LoginResult result{
@@ -121,9 +128,11 @@ drogon::Task<std::expected<LoginResult, std::string>> AuthService::login(const s
   co_return result;
 }
 
-drogon::Task<std::expected<LoginResult, std::string>> AuthService::refresh(const std::string& refresh_token) {
+drogon::Task<std::expected<LoginResult, ServiceError>> AuthService::refresh(const std::string& refresh_token) {
   if (refresh_token.empty()) {
-    co_return std::unexpected("Missing refresh token");
+    co_return std::unexpected(ServiceError{
+      .status = drogon::k401Unauthorized,
+      .message = std::string(core::helpers::defaultErrorMessage(drogon::k401Unauthorized))});
   }
 
   auto db = drogon::app().getDbClient("PhotonServer");
@@ -141,9 +150,13 @@ drogon::Task<std::expected<LoginResult, std::string>> AuthService::refresh(const
         refresh_token);
       trans->rollback();
       if (!expired.empty()) {
-        co_return std::unexpected("Refresh token expired");
+        co_return std::unexpected(ServiceError{
+          .status = drogon::k401Unauthorized,
+          .message = std::string(core::helpers::defaultErrorMessage(drogon::k401Unauthorized))});
       }
-      co_return std::unexpected("Invalid refresh token");
+      co_return std::unexpected(ServiceError{
+        .status = drogon::k401Unauthorized,
+        .message = std::string(core::helpers::defaultErrorMessage(drogon::k401Unauthorized))});
     }
 
     const std::string admin_id = consumed.front()["admin_id"].as<std::string>();
@@ -153,7 +166,9 @@ drogon::Task<std::expected<LoginResult, std::string>> AuthService::refresh(const
         admin_id);
     if (admin.empty()) {
       trans->rollback();
-      co_return std::unexpected("Invalid refresh token");
+      co_return std::unexpected(ServiceError{
+        .status = drogon::k401Unauthorized,
+        .message = std::string(core::helpers::defaultErrorMessage(drogon::k401Unauthorized))});
     }
 
     const auto& conf = core::config::AppConfig::get();
@@ -192,10 +207,14 @@ drogon::Task<std::expected<LoginResult, std::string>> AuthService::refresh(const
       .expires_in_sec = conf.jwt_expires_in_sec};
   } catch (const drogon::orm::DrogonDbException& e) {
     LOG_ERROR << "Refresh token rotation failed: " << e.base().what();
-    co_return std::unexpected("Internal server error");
+    co_return std::unexpected(ServiceError{
+      .status = drogon::k500InternalServerError,
+      .message = std::string(core::helpers::defaultErrorMessage(drogon::k500InternalServerError))});
   } catch (const std::exception& e) {
     LOG_ERROR << "Refresh token rotation failed: " << e.what();
-    co_return std::unexpected("Internal server error");
+    co_return std::unexpected(ServiceError{
+      .status = drogon::k500InternalServerError,
+      .message = std::string(core::helpers::defaultErrorMessage(drogon::k500InternalServerError))});
   }
 }
 

@@ -13,6 +13,11 @@
 
 namespace core::services {
 
+  struct ServiceError {
+      drogon::HttpStatusCode status;
+      std::string message;
+  };
+
   struct LoginResult {
       std::string access_token;
       std::string refresh_token;
@@ -31,9 +36,9 @@ namespace core::services {
       /// It must be implemented by the user.
       void shutdown() override;
 
-      drogon::Task<std::expected<LoginResult, std::string>> login(const std::string& username, const std::string& password);
+      drogon::Task<std::expected<LoginResult, ServiceError>> login(const std::string& username, const std::string& password);
 
-      drogon::Task<std::expected<LoginResult, std::string>> refresh(const std::string& refresh_token);
+      drogon::Task<std::expected<LoginResult, ServiceError>> refresh(const std::string& refresh_token);
 
       drogon::Task<void> logout(const std::string& refresh_token);
 

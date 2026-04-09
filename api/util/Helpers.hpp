@@ -5,11 +5,16 @@
 #include <optional>
 #include <string>
 #include <drogon/HttpResponse.h>
+#include <drogon/HttpTypes.h>
 #include <nlohmann/json.hpp>
 
 namespace core::helpers {
 
   drogon::HttpResponsePtr makeJsonResponse(const nlohmann::json& payload, drogon::HttpStatusCode status = drogon::k200OK);
+  std::string_view defaultErrorMessage(drogon::HttpStatusCode status) noexcept;
+  drogon::HttpResponsePtr makeErrorResponse(
+    drogon::HttpStatusCode status,
+    std::string_view message = {});
 
   template<typename T>
   std::optional<T> fromEnvString(std::string_view s) {

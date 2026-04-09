@@ -57,10 +57,9 @@ void LoginRateLimiter::doFilter(const HttpRequestPtr &req,
       data.start_time = now;
     } else {
       if (data.count >= conf.login_requests_per_window) {
-        nlohmann::json response;
-        response["success"] = false;
-        response["message"] = "Too many login attempts. Please try again later.";
-        fcb(core::helpers::makeJsonResponse(response));
+        fcb(core::helpers::makeErrorResponse(
+          drogon::k429TooManyRequests,
+          "Too many login attempts. Please try again later."));
         return;
       }
       data.count++;

@@ -16,9 +16,7 @@ using namespace core::filters;
 namespace {
   HttpResponsePtr unauthorizedResponse()
   {
-    return core::helpers::makeJsonResponse(
-      {{"success", false}, {"message", "Unauthorized"}},
-      drogon::k401Unauthorized);
+    return core::helpers::makeErrorResponse(drogon::k401Unauthorized);
   }
 
   std::string_view extractBearerToken(const HttpRequestPtr &req)
