@@ -11,18 +11,12 @@
 #include <drogon/utils/coroutine.h>
 #include <expected>
 
+#include "../types/AuthTypes.hpp"
+#include "../types/ServiceTypes.hpp"
+
 namespace core::services {
-
-  struct ServiceError {
-      drogon::HttpStatusCode status;
-      std::string message;
-  };
-
-  struct LoginResult {
-      std::string access_token;
-      std::string refresh_token;
-      int64_t expires_in_sec;
-  };
+  using core::types::LoginResult;
+  using core::types::ServiceError;
 
   class AuthService : public drogon::Plugin<AuthService>
   {
