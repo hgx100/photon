@@ -41,7 +41,15 @@ The project uses CMake presets to manage different build configurations. List av
 cmake --list-presets
 ```
 
+Unix-like presets are the maintained and tested presets, and they contain the project's fuller build configuration. Windows presets exist, but they are currently minimal, bare-bones, and not tested.
+
 Available configure presets:
+* `windows-msvc-debug-developer-mode` - msvc Debug (Developer Mode)
+* `windows-msvc-release-developer-mode` - msvc Release (Developer Mode)
+* `windows-msvc-debug-user-mode` - msvc Debug (User Mode)
+* `windows-msvc-release-user-mode` - msvc Release (User Mode)
+* `windows-clang-debug` - clang Debug
+* `windows-clang-release` - clang Release
 * `unixlike-gcc-debug` - gcc Debug
 * `unixlike-gcc-release` - gcc Release
 * `unixlike-clang-debug` - clang Debug
