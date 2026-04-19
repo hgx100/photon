@@ -64,6 +64,14 @@ Run the configuration using your preferred preset (e.g., clang release):
 cmake --preset unixlike-clang-release
 ```
 
+Unix-like presets assume `ninja`, `ccache`, and `mold` are installed and available in `PATH`.
+
+If you only need a specific binary, disable unrelated targets at configure time so their dependencies are not pulled in. For example, to configure only the API and admin seeder without the Telegram bot stack:
+
+```bash
+cmake --preset unixlike-clang-release -DPHOTON_BUILD_BOT=OFF
+```
+
 ### 5. Build
 Compile the specific target you need (`photon_api` or `photon_bot`):
 

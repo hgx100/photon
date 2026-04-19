@@ -7,6 +7,9 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 option(PHOTON_ENABLE_CLANG_TIDY "Enable clang-tidy on photon targets" ON)
+option(PHOTON_BUILD_API "Build photon_api" ON)
+option(PHOTON_BUILD_ADMIN_SEED "Build photon_admin_seed" ON)
+option(PHOTON_BUILD_BOT "Build photon_bot" ON)
 
 # add compile_commands.json symlink for clangd
 if(NOT CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR)
@@ -38,42 +41,71 @@ set(CLI11_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(CLI11_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(CLI11_INSTALL OFF CACHE BOOL "" FORCE)
 
-find_package(Threads REQUIRED)
-find_package(gRPC REQUIRED)
-find_package(OpenSSL REQUIRED)
-find_package(Botan REQUIRED)
+set(PHOTON_NEEDS_PROTO_TARGETS OFF)
+if(PHOTON_BUILD_API OR PHOTON_BUILD_BOT)
+  set(PHOTON_NEEDS_PROTO_TARGETS ON)
+endif()
 
-pkg_check_modules(CARES REQUIRED libcares)
+set(PHOTON_NEEDS_THREADS OFF)
+if(PHOTON_BUILD_API OR PHOTON_BUILD_ADMIN_SEED)
+  set(PHOTON_NEEDS_THREADS ON)
+endif()
 
-if(NOT TARGET c-ares_lib)
-  if(TARGET c-ares::cares)
-    add_library(c-ares_lib INTERFACE IMPORTED)
-    target_link_libraries(c-ares_lib INTERFACE c-ares::cares)
-  else()
-    find_package(PkgConfig REQUIRED)
-    pkg_check_modules(CARES REQUIRED IMPORTED_TARGET libcares)
-    add_library(c-ares_lib ALIAS PkgConfig::CARES)
+if(PHOTON_NEEDS_THREADS)
+  find_package(Threads REQUIRED)
+endif()
+
+if(PHOTON_NEEDS_PROTO_TARGETS)
+  find_package(gRPC REQUIRED)
+endif()
+
+if(PHOTON_BUILD_API OR PHOTON_BUILD_ADMIN_SEED)
+  find_package(Botan REQUIRED)
+endif()
+
+if(PHOTON_BUILD_API)
+  find_package(OpenSSL REQUIRED)
+  find_package(PkgConfig REQUIRED)
+  pkg_check_modules(CARES REQUIRED libcares)
+
+  if(NOT TARGET c-ares_lib)
+    if(TARGET c-ares::cares)
+      add_library(c-ares_lib INTERFACE IMPORTED)
+      target_link_libraries(c-ares_lib INTERFACE c-ares::cares)
+    else()
+      pkg_check_modules(CARES REQUIRED IMPORTED_TARGET libcares)
+      add_library(c-ares_lib ALIAS PkgConfig::CARES)
+    endif()
   endif()
 endif()
 
-add_subdirectory(third_party/nlohmann_json SYSTEM)
-add_subdirectory(third_party/cli11 SYSTEM)
-add_subdirectory(third_party/drogon SYSTEM)
-if(TARGET drogon)
-  # Drogon adds -Werror for GCC; demote to warnings so dependency updates do not break the tree.
-  target_compile_options(drogon PRIVATE $<$<CXX_COMPILER_ID:GNU>:-Wno-error>)
+if(PHOTON_BUILD_API)
+  add_subdirectory(third_party/nlohmann_json SYSTEM)
+  add_subdirectory(third_party/jwt-cpp SYSTEM)
 endif()
 
-# cpr (inside tgbotxx) appends -Wall -Wextra -Wpedantic -Werror to CMAKE_CXX_FLAGS (global). Restore
-# after add_subdirectory so that does not stick for photon_* or later deps; cpr may still add per-target flags.
-set(_PHOTON_CXX_FLAGS_PRE_TGBOTXX "${CMAKE_CXX_FLAGS}")
-add_subdirectory(third_party/tgbotxx SYSTEM)
-set(CMAKE_CXX_FLAGS "${_PHOTON_CXX_FLAGS_PRE_TGBOTXX}"
-    CACHE STRING "Flags used by the compiler during all build types." FORCE)
-unset(_PHOTON_CXX_FLAGS_PRE_TGBOTXX)
+if(PHOTON_BUILD_API OR PHOTON_BUILD_ADMIN_SEED)
+  add_subdirectory(third_party/cli11 SYSTEM)
+  add_subdirectory(third_party/drogon SYSTEM)
+  if(TARGET drogon)
+    # Drogon adds -Werror for GCC; demote to warnings so dependency updates do not break the tree.
+    target_compile_options(drogon PRIVATE $<$<CXX_COMPILER_ID:GNU>:-Wno-error>)
+  endif()
+endif()
 
-add_subdirectory(third_party/jwt-cpp SYSTEM)
-add_subdirectory(third_party/spdlog SYSTEM)
+if(PHOTON_BUILD_API OR PHOTON_BUILD_BOT)
+  add_subdirectory(third_party/spdlog SYSTEM)
+endif()
+
+if(PHOTON_BUILD_BOT)
+  # cpr (inside tgbotxx) appends -Wall -Wextra -Wpedantic -Werror to CMAKE_CXX_FLAGS (global). Restore
+  # after add_subdirectory so that does not stick for photon_* or later deps; cpr may still add per-target flags.
+  set(_PHOTON_CXX_FLAGS_PRE_TGBOTXX "${CMAKE_CXX_FLAGS}")
+  add_subdirectory(third_party/tgbotxx SYSTEM)
+  set(CMAKE_CXX_FLAGS "${_PHOTON_CXX_FLAGS_PRE_TGBOTXX}"
+      CACHE STRING "Flags used by the compiler during all build types." FORCE)
+  unset(_PHOTON_CXX_FLAGS_PRE_TGBOTXX)
+endif()
 
 if(PHOTON_ENABLE_CLANG_TIDY)
   set(PHOTON_LINTER
@@ -87,9 +119,9 @@ include_directories(${CMAKE_SOURCE_DIR}/shared)
 file(GLOB_RECURSE PROTO_SRCS "${CMAKE_SOURCE_DIR}/generated/*.pb.cc")
 file(GLOB_RECURSE PROTO_HDRS "${CMAKE_SOURCE_DIR}/generated/*.pb.h")
 
-if(NOT PROTO_SRCS)
+if(PHOTON_NEEDS_PROTO_TARGETS AND NOT PROTO_SRCS)
   message(WARNING "No generated protobuf files found! Run ./scripts/generate_protos.sh")
-else()
+elseif(PHOTON_NEEDS_PROTO_TARGETS)
   add_library(photon_protos STATIC ${PROTO_SRCS} ${PROTO_HDRS})
 
   target_link_libraries(photon_protos PUBLIC
@@ -110,7 +142,7 @@ if(API_MODEL_SRCS)
   set_source_files_properties(${API_MODEL_SRCS} PROPERTIES SKIP_LINTING ON)
 endif()
 
-if(API_SRCS AND TARGET photon_protos)
+if(PHOTON_BUILD_API AND API_SRCS AND TARGET photon_protos)
   add_executable(photon_api ${API_SRCS})
 
   if(PHOTON_ENABLE_CLANG_TIDY)
@@ -130,7 +162,7 @@ if(API_SRCS AND TARGET photon_protos)
 endif()
 
 # photon admin seeder
-if(TARGET photon_protos)
+if(PHOTON_BUILD_ADMIN_SEED)
   add_executable(photon_admin_seed tools/seed_admin.cpp api/util/Crypto.cpp)
 
   if(PHOTON_ENABLE_CLANG_TIDY)
@@ -148,7 +180,7 @@ endif()
 # photon bot
 file(GLOB_RECURSE BOT_SRCS "bot/*.cpp" "shared/*.cpp")
 
-if(BOT_SRCS AND TARGET photon_protos)
+if(PHOTON_BUILD_BOT AND BOT_SRCS AND TARGET photon_protos)
   add_executable(photon_bot ${BOT_SRCS})
 
   if(PHOTON_ENABLE_CLANG_TIDY)

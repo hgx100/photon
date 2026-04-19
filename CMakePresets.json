@@ -55,7 +55,7 @@
         "CMAKE_CXX_COMPILER_LAUNCHER": "ccache",
         "CMAKE_LINKER_TYPE": "MOLD",
         "CMAKE_CXX_CLANG_TIDY": "",
-        "CMAKE_UNITY_BUILD": "ON"
+        "CMAKE_UNITY_BUILD": "OFF"
       },
       "vendor": {
         "microsoft.com/VisualStudioRemoteSettings/CMake/1.0": {
