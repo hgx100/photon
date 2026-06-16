@@ -113,83 +113,41 @@ if(PHOTON_ENABLE_CLANG_TIDY)
 endif()
 
 # generate protos
-include_directories(${CMAKE_SOURCE_DIR}/generated)
-include_directories(${CMAKE_SOURCE_DIR}/shared)
+if(PHOTON_NEEDS_PROTO_TARGETS)
+  if(EXISTS "${CMAKE_SOURCE_DIR}/generated/protos.cmake")
+    include("${CMAKE_SOURCE_DIR}/generated/protos.cmake")
+  endif()
 
-file(GLOB_RECURSE PROTO_SRCS "${CMAKE_SOURCE_DIR}/generated/*.pb.cc")
-file(GLOB_RECURSE PROTO_HDRS "${CMAKE_SOURCE_DIR}/generated/*.pb.h")
+  if(NOT PROTO_SRCS)
+    message(WARNING "No generated protobuf files found! Run ./scripts/generate_protos.sh")
+  else()
+    add_library(photon_protos STATIC ${PROTO_SRCS} ${PROTO_HDRS})
 
-if(PHOTON_NEEDS_PROTO_TARGETS AND NOT PROTO_SRCS)
-  message(WARNING "No generated protobuf files found! Run ./scripts/generate_protos.sh")
-elseif(PHOTON_NEEDS_PROTO_TARGETS)
-  add_library(photon_protos STATIC ${PROTO_SRCS} ${PROTO_HDRS})
+    target_include_directories(photon_protos PUBLIC
+        ${CMAKE_SOURCE_DIR}/generated
+        ${CMAKE_SOURCE_DIR}/shared
+    )
 
-  target_link_libraries(photon_protos PUBLIC
+    target_link_libraries(photon_protos PUBLIC
         protobuf::libprotobuf
         gRPC::grpc++
     )
 
-  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
-    target_compile_options(photon_protos PRIVATE -Wno-unused-variable -Wno-deprecated-declarations)
+    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+      target_compile_options(photon_protos PRIVATE -Wno-unused-variable -Wno-deprecated-declarations)
+    endif()
   endif()
 endif()
 
-# photon core
-file(GLOB_RECURSE API_SRCS "api/*.cpp" "shared/*.cpp")
-file(GLOB_RECURSE API_MODEL_SRCS "api/models/*.cpp")
-
-if(API_MODEL_SRCS)
-  set_source_files_properties(${API_MODEL_SRCS} PROPERTIES SKIP_LINTING ON)
+# Subdirectories
+if(PHOTON_BUILD_API)
+  add_subdirectory(api)
 endif()
 
-if(PHOTON_BUILD_API AND API_SRCS AND TARGET photon_protos)
-  add_executable(photon_api ${API_SRCS})
-
-  if(PHOTON_ENABLE_CLANG_TIDY)
-    set_target_properties(photon_api PROPERTIES CXX_CLANG_TIDY "${PHOTON_LINTER}")
-  endif()
-
-  target_link_libraries(photon_api PRIVATE
-        photon_protos
-        CLI11::CLI11
-        nlohmann_json::nlohmann_json
-        Threads::Threads
-        drogon
-        Botan::Botan
-        jwt-cpp::jwt-cpp
-        spdlog::spdlog
-    )
-endif()
-
-# photon admin seeder
 if(PHOTON_BUILD_ADMIN_SEED)
-  add_executable(photon_admin_seed tools/seed_admin.cpp api/util/Crypto.cpp)
-
-  if(PHOTON_ENABLE_CLANG_TIDY)
-    set_target_properties(photon_admin_seed PROPERTIES CXX_CLANG_TIDY "${PHOTON_LINTER}")
-  endif()
-
-  target_link_libraries(photon_admin_seed PRIVATE
-        CLI11::CLI11
-        Threads::Threads
-        drogon
-        Botan::Botan
-    )
+  add_subdirectory(tools)
 endif()
 
-# photon bot
-file(GLOB_RECURSE BOT_SRCS "bot/*.cpp" "shared/*.cpp")
-
-if(PHOTON_BUILD_BOT AND BOT_SRCS AND TARGET photon_protos)
-  add_executable(photon_bot ${BOT_SRCS})
-
-  if(PHOTON_ENABLE_CLANG_TIDY)
-    set_target_properties(photon_bot PROPERTIES CXX_CLANG_TIDY "${PHOTON_LINTER}")
-  endif()
-
-  target_link_libraries(photon_bot PRIVATE
-        photon_protos
-        tgbotxx
-        spdlog::spdlog
-    )
+if(PHOTON_BUILD_BOT)
+  add_subdirectory(bot)
 endif()
