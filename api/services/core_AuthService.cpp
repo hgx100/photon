@@ -10,17 +10,12 @@
 #include "../util/Helpers.hpp"
 #include <botan/system_rng.h>
 #include <botan/base64.h>
-#include <drogon/orm/CoroMapper.h>
-#include <drogon/orm/Criteria.h>
-#include <drogon/orm/Exception.h>
-#include <drogon/utils/Utilities.h>
-#include <drogon/utils/coroutine.h>
-#include <drogon/drogon.h>
+#include "third_party/drogon.hpp"
 #include <algorithm>
 #include <expected>
 #include "../models/AdminRefreshTokens.h"
 #include "../models/Admins.h"
-#include <jwt-cpp/jwt.h>
+#include "third_party/jwt.hpp"
 
 
 using namespace drogon;
